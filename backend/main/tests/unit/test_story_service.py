@@ -1,7 +1,7 @@
 """
 tests/unit/test_story_service.py — Unit tests for the StoryService.
 
-Mocks the repository and Celery tasks to isolate business logic.
+Mocks the repository and background scheduling to isolate business logic.
 """
 
 import pytest
@@ -11,7 +11,7 @@ from storage.db import Story
 
 @pytest.mark.asyncio
 async def test_create_story_success(mock_repo):
-    """Verify that create_story persists to DB and dispatches to Celery."""
+    """Verify that create_story persists to DB and dispatches in-process."""
     service = StoryService(mock_repo)
     
     # Setup mock return value
@@ -25,17 +25,18 @@ async def test_create_story_success(mock_repo):
         "length": "short"
     }
 
-    # Use patch to mock the Celery task inside the service
-    with patch("tasks.celery_app.run_story_pipeline.delay") as mock_delay:
+    # Use patch to mock the background scheduler inside the service
+    with patch("services.story_service.submit_background_task") as mock_submit:
         result = await service.create_story(story_data)
         
         # 1. Check DB call
         mock_repo.create.assert_called_once_with(story_data)
         
-        # 2. Check Celery dispatch
-        mock_delay.assert_called_once()
-        args, _ = mock_delay.call_args
-        assert args[0]["story_id"] == "test-id"
+        # 2. Check background dispatch
+        mock_submit.assert_called_once()
+        args, _ = mock_submit.call_args
+        scheduled_coro = args[0]
+        assert hasattr(scheduled_coro, "__await__")
         
         assert result.id == "test-id"
 
@@ -55,7 +56,7 @@ async def test_approve_story_success(mock_repo):
     mock_repo.get_by_id = AsyncMock(return_value=mock_story)
     mock_repo.update = AsyncMock()
     
-    with patch("tasks.celery_app.run_story_pipeline.delay") as mock_delay:
+    with patch("services.story_service.submit_background_task") as mock_submit:
         await service.approve_story("test-id")
         
         # 1. Check DB update (approved=True)
@@ -66,5 +67,5 @@ async def test_approve_story_success(mock_repo):
         assert updates_dict["user_prefs"]["approved"] is True
         assert updates_dict["status"] == "processing"
         
-        # 2. Check Celery re-dispatch
-        mock_delay.assert_called_once()
+        # 2. Check background re-dispatch
+        mock_submit.assert_called_once()

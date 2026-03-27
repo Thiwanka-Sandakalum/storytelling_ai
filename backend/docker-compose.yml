@@ -1,7 +1,6 @@
 services:
   # ── Infrastructure ─────────────────────────────────────────
   # PostgreSQL — Neon (cloud)
-  # Redis     — Upstash (cloud)
   # S3/MinIO  — removed; scripts stored in Postgres draft_script column
 
   # ── Main Storytelling API ──────────────────────────────────
@@ -16,20 +15,6 @@ services:
       TTS_SERVICE_URL: http://tts-service:8001
     ports:
       - "8000:8000"
-
-  celery_worker:
-    image: storytelling_main:latest
-    restart: unless-stopped
-    env_file: ./main/.env
-    environment:
-      PYTHONPATH: /app
-    command: >
-      celery -A tasks.celery_app worker
-      --loglevel=info
-      --concurrency=2
-    depends_on:
-      main-api:
-        condition: service_started
 
   # ── Interactive Narrator (TTS) ────────────────────────────
   tts-service:

@@ -217,12 +217,17 @@ async def story_events(
     service: StoryService = Depends(get_story_service),
 ):
     """
-    Server-Sent Events (SSE) endpoint that streams real-time progress updates
-    for a specific story generation job. Subscribes to a Redis Pub/Sub channel.
+    Server-Sent Events (SSE) endpoint that streams progress updates for a
+    specific story generation job by polling the database.
     """
     async def event_generator():
-        import redis.asyncio as redis
+        import asyncio
         import json
+        import time
+
+        poll_interval = 1.5
+        deadline = time.monotonic() + (30 * 60)
+        last_updated_at = None
 
         # 1. Check current status in DB first
         try:
@@ -245,33 +250,29 @@ async def story_events(
         except Exception as exc:
             logger.error("api.sse_initial_check_failed story_id=%s error=%s", story_id, exc)
 
-        # 2. Proceed to Redis Pub/Sub for live updates
-        r = redis.from_url(settings.redis_url)
-        pubsub = r.pubsub()
-        channel = f"story_events:{story_id}"
-        await pubsub.subscribe(channel)
-        
-        logger.info("api.sse_subscribed story_id=%s channel=%s", story_id, channel)
-        
         try:
-            # Yield initial status if possible (optional: could fetch from DB here)
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    data = message["data"].decode("utf-8")
-                    yield f"data: {data}\n\n"
-                    
-                    # If we see 'completed' or 'failed', we can stop the stream
-                    msg_json = json.loads(data)
-                    if msg_json.get("status") in ("completed", "failed"):
-                        logger.info("api.sse_closing story_id=%s status=%s", story_id, msg_json.get("status"))
-                        break
+            while time.monotonic() < deadline:
+                await asyncio.sleep(poll_interval)
+
+                status_data = await service.get_story_status(story_id)
+                story = status_data["story"]
+
+                if last_updated_at != story.updated_at:
+                    last_updated_at = story.updated_at
+                    data = {
+                        "story_id": story.id,
+                        "status": story.status,
+                        "topic": story.topic,
+                        "updated_at": story.updated_at.isoformat(),
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
+
+                if story.status in ("completed", "failed"):
+                    logger.info("api.sse_closing story_id=%s status=%s", story_id, story.status)
+                    break
         except Exception as exc:
             logger.error("api.sse_error story_id=%s error=%s", story_id, exc)
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
-        finally:
-            await pubsub.unsubscribe(channel)
-            await pubsub.close()
-            logger.info("api.sse_unsubscribed story_id=%s", story_id)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

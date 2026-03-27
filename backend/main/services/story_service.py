@@ -7,7 +7,9 @@ import httpx
 from typing import Any, Sequence
 from fastapi import HTTPException, status
 
+from background import submit_background_task
 from config import settings
+from pipeline_runner import run_story_pipeline_async
 from repositories.story_repo import StoryRepository
 
 logger = logging.getLogger(__name__)
@@ -21,8 +23,6 @@ class StoryService:
 
     async def create_story(self, data: dict[str, Any]) -> Any:
         """Initialize a new story and dispatch it to the pipeline."""
-        from tasks.celery_app import run_story_pipeline
-
         # 1. Persist to DB
         voice_id = data.pop("voice_id", "Zephyr")
         if "user_prefs" not in data:
@@ -31,7 +31,7 @@ class StoryService:
         
         story = await self.repo.create(data)
 
-        # 2. Dispatch Celery task
+        # 2. Dispatch in-process background task
         # We pass the full state required by LangGraph
         state = {
             "story_id":      story.id,
@@ -43,7 +43,10 @@ class StoryService:
             "outline":       None,
             "sections_done": [],
         }
-        run_story_pipeline.delay(state)
+        submit_background_task(
+            run_story_pipeline_async(state),
+            name=f"story-{story.id}",
+        )
         logger.info("service.story_submitted id=%s", story.id)
         return story
 
@@ -72,8 +75,6 @@ class StoryService:
 
     async def approve_story(self, story_id: str) -> Any:
         """Mark a story as approved and trigger the next pipeline phase."""
-        from tasks.celery_app import run_story_pipeline
-
         story = await self.repo.get_by_id(story_id)
         if not story:
             raise HTTPException(
@@ -86,7 +87,7 @@ class StoryService:
         user_prefs["approved"] = True
         await self.repo.update(story_id, {"user_prefs": user_prefs, "status": "processing"})
 
-        # 2. Re-dispatch to Celery
+        # 2. Re-dispatch in-process background task
         state = {
             "story_id":      story.id,
             "topic":         story.topic,
@@ -97,7 +98,10 @@ class StoryService:
             "outline":       story.outline_json,
             "sections_done": [],
         }
-        run_story_pipeline.delay(state)
+        submit_background_task(
+            run_story_pipeline_async(state),
+            name=f"story-{story.id}",
+        )
         logger.info("service.story_approved id=%s", story_id)
         return await self.repo.get_by_id(story_id)
 

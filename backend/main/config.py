@@ -31,12 +31,6 @@ class Settings(BaseSettings):
         description="Async SQLAlchemy connection string (Neon pooler)",
     )
 
-    # ── Redis / Celery ────────────────────────────────────────
-    redis_url: str = Field(
-        default="rediss://default_ro:Ao9SAAIgcDFTKbsG8VVgH67mcs_9XlR7JMfTir1CfsEPDonYCcUtrg@massive-lynx-36690.upstash.io:6379",
-        description="Redis connection URL for Celery broker and backend (Upstash TLS)",
-    )
-
     # ── Google Gemini ─────────────────────────────────────────
     gemini_api_key: str = Field(default="", description="Google Gemini API key")
     gemini_model: str = Field(

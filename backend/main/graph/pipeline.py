@@ -88,11 +88,11 @@ def _build_graph() -> StateGraph:
     # 3. Workers → Assembler (implicit fan-in: waits for all workers to complete)
     builder.add_edge("generate_chapter", "assemble_story")
 
-    # 4. Assembler → END (draft_script is persisted to Postgres by Celery)
+    # 4. Assembler → END (draft_script is persisted to Postgres by the runner)
     builder.add_edge("assemble_story", END)
 
     return builder
 
 
-# ── Compiled graph — imported by Celery tasks and `langgraph dev` ─────────────
+# ── Compiled graph — imported by the runner and `langgraph dev` ───────────────
 compiled_graph = _build_graph().compile()
