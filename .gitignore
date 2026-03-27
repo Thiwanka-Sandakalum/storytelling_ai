@@ -1,0 +1,81 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+
+# Backend build/runtime
+backend/**/.pytest_cache/
+backend/**/__pycache__/
+backend/**/.mypy_cache/
+backend/**/.ruff_cache/
+backend/**/dist/
+backend/**/build/
+backend/**/.env
+backend/**/.env.*
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker
+**/.dockerignore.local
+docker-data/
+
+# Test artifacts
+coverage/
+reports/
+
+# Media / generated assets (optional)
+*.mp3
+*.wav
+*.ogg
+*.aac
+*.m4a
+*.flac
+backend/main/.langgraph_api/.langgraph_checkpoint.1.pckl
+backend/main/.langgraph_api/.langgraph_checkpoint.2.pckl
+backend/main/.langgraph_api/.langgraph_checkpoint.3.pckl
+backend/main/.langgraph_api/.langgraph_ops.pckl
+backend/main/.langgraph_api/.langgraph_retry_counter.pckl
+backend/main/.langgraph_api/store.pckl
+backend/main/.langgraph_api/store.vectors.pckl
+backend/tts/.adk/session.db

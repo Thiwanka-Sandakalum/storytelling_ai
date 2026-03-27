@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #c799ff;
+  --color-primary-container: #bc87fe;
+  --color-primary-dim: #ba85fb;
+
+  --color-secondary: #4af8e3;
+  --color-secondary-dim: #33e9d5;
+
+  --color-background: #0e0c20;
+  --color-surface: #0e0c20;
+  --color-surface-container-low: #131027;
+  --color-surface-container: #19162f;
+  --color-surface-container-high: #1f1c37;
+  --color-surface-container-highest: #25223f;
+  --color-surface-variant: #25223f;
+  --color-surface-bright: #2b2848;
+  --color-surface-dim: #0e0c20;
+  --color-surface-container-lowest: #000000;
+
+  --color-on-background: #e7e2ff;
+  --color-on-surface: #e7e2ff;
+  --color-on-surface-variant: #aca8c3;
+  --color-outline: #76738c;
+  --color-outline-variant: #48455c;
+  --color-error: #ff6e84;
+
+  --font-headline: "Newsreader", serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+  --font-display: "Playfair Display", serif;
+
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-wave: wave 1.2s ease-in-out infinite;
+
+  @keyframes wave {
+
+    0%,
+    100% {
+      height: 8px;
+    }
+
+    50% {
+      height: 32px;
+    }
+  }
+
+  @keyframes soundbar {
+    from {
+      transform: scaleY(0.4);
+    }
+
+    to {
+      transform: scaleY(1.2);
+    }
+  }
+
+  --shadow-cosmic: 0 0 40px rgba(199, 153, 255, 0.06);
+  --shadow-ignite: 0 0 20px rgba(199, 153, 255, 0.4);
+}
+
+/* Custom Utilities */
+@utility text-glow {
+  text-shadow: 0 0 20px rgba(199, 153, 255, 0.3);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-body overflow-x-hidden antialiased;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled) {
+    cursor: pointer;
+    transition: transform 120ms ease, filter 120ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input:disabled {
+    cursor: not-allowed;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  a[href]:active,
+  input[type="button"]:not(:disabled):active,
+  input[type="submit"]:not(:disabled):active,
+  input[type="reset"]:not(:disabled):active {
+    transform: scale(0.98);
+    filter: brightness(0.97);
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  textarea,
+  select {
+    outline: none;
+    box-shadow: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="search"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  input[type="number"]:focus,
+  textarea:focus,
+  select:focus,
+  input[type="text"]:focus-visible,
+  input[type="email"]:focus-visible,
+  input[type="password"]:focus-visible,
+  input[type="search"]:focus-visible,
+  input[type="tel"]:focus-visible,
+  input[type="url"]:focus-visible,
+  input[type="number"]:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 22%, transparent),
+      0 0 24px color-mix(in srgb, var(--color-primary) 16%, transparent);
+    background-color: color-mix(in srgb, var(--color-surface-container-high) 92%, transparent);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface-container-highest/40 backdrop-blur-[20px] border border-outline-variant/15 transition-all duration-500;
+  }
+
+  /* Material Symbols Configuration */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    display: inline-block;
+    line-height: 1;
+  }
+}
