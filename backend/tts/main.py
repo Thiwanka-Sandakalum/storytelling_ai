@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import uuid
+import warnings
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -28,6 +29,14 @@ logging.getLogger("websockets").setLevel(logging.WARNING)
 logging.getLogger("websockets.client").setLevel(logging.WARNING)
 logging.getLogger("google_adk").setLevel(logging.INFO)
 logging.getLogger("google.genai").setLevel(logging.INFO)
+
+# ADK currently emits a non-fatal Pydantic warning for response_modalities
+# serialization in live audio mode. Suppress only this known warning.
+warnings.filterwarnings(
+    "ignore",
+    message=r"PydanticSerializationUnexpectedValue\(Expected `enum`.*field_name='response_modalities'",
+    category=UserWarning,
+)
 
 
 @asynccontextmanager
@@ -131,7 +140,7 @@ async def ws_endpoint(
         streaming_mode=StreamingMode.BIDI,
         # audio: Gemini Live outputs PCM16 at 24 kHz by default.
         # The client AudioContext is also configured at 24 000 Hz (SAMPLE_RATE).
-        response_modalities=["audio"],
+        response_modalities=[types.Modality.AUDIO],
         speech_config=types.SpeechConfig(
             voice_config=types.VoiceConfig(
                 prebuilt_voice_config=types.PrebuiltVoiceConfig(
@@ -142,14 +151,26 @@ async def ws_endpoint(
         session_resumption=types.SessionResumptionConfig(),
     )
     live_request_queue = LiveRequestQueue()
+    narration_requested = False
+    audio_chunk_count = 0
+    no_audio_retry_sent = False
 
     # ── Phase 3: Concurrent upstream / downstream ─────────────────────────────
 
     async def upstream():
         """Client messages → LiveRequestQueue."""
+        nonlocal narration_requested, audio_chunk_count, no_audio_retry_sent
         try:
             while True:
                 msg = await websocket.receive()
+
+                if msg.get("type") == "websocket.disconnect":
+                    logger.info(
+                        "Client disconnected: user_id=%s, session_id=%s",
+                        user_id,
+                        session_id,
+                    )
+                    break
 
                 if "bytes" in msg:
                     # Raw PCM16 audio from mic (16kHz, mono)
@@ -165,11 +186,20 @@ async def ws_endpoint(
                     kind = data.get("type")
 
                     if kind == "start_narration":
+                        narration_requested = True
+                        audio_chunk_count = 0
+                        no_audio_retry_sent = False
+                        logger.info(
+                            "tts.start_narration.received user_id=%s session_id=%s",
+                            user_id,
+                            session_id,
+                        )
                         live_request_queue.send_content(
                             types.Content(
+                                role="user",
                                 parts=[
                                     types.Part(
-                                        text="Please begin narrating the story now."
+                                        text="start"
                                     )
                                 ]
                             )
@@ -212,6 +242,7 @@ async def ws_endpoint(
           event.output_transcription — OutputTranscription with .text
           event.error_code           — non-None on model error
         """
+        nonlocal narration_requested, audio_chunk_count, no_audio_retry_sent
         segment_index = 0
         turn_was_complete = True  # treat session start as "after a completed turn"
         event_count = 0
@@ -249,6 +280,13 @@ async def ws_endpoint(
                             continue  # skip Gemini internal reasoning tokens
                         inline = getattr(part, "inline_data", None)
                         if inline and inline.data:
+                            audio_chunk_count += 1
+                            if audio_chunk_count == 1:
+                                logger.info(
+                                    "tts.audio.first_chunk_emitted user_id=%s session_id=%s",
+                                    user_id,
+                                    session_id,
+                                )
                             await websocket.send_bytes(inline.data)
 
                 # ── Segment sync ──────────────────────────────────────────────
@@ -268,6 +306,25 @@ async def ws_endpoint(
                         })
 
                 if event.turn_complete:
+                    if narration_requested and audio_chunk_count == 0 and not no_audio_retry_sent:
+                        # Retry once with a stronger directive if the model finished
+                        # without emitting audio bytes.
+                        no_audio_retry_sent = True
+                        logger.warning(
+                            "tts.audio.empty_turn_retry user_id=%s session_id=%s",
+                            user_id,
+                            session_id,
+                        )
+                        live_request_queue.send_content(
+                            types.Content(
+                                role="user",
+                                parts=[
+                                    types.Part(
+                                        text="begin narration now and respond with spoken audio only"
+                                    )
+                                ],
+                            )
+                        )
                     turn_was_complete = True
                     await websocket.send_json({"type": "turn_complete"})
 
