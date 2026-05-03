@@ -47,7 +47,7 @@ class StorySection(TypedDict):
     index: int            # Global 0-based position across all chapters
     chapter_index: int    # Which chapter/act this section belongs to
     chapter_title: str    # Parent chapter title passed to the generator for context
-    content: str | None   # Filled in by the generate_section worker
+    content: str | None   # Filled in by the generate_chapter worker
 
 
 class StoryChapter(TypedDict):
@@ -129,26 +129,11 @@ class StoryState(TypedDict):
 
     draft_script: str | None           # Assembler
     script_path: str | None            # Saver (S3/MinIO key)
+    cover_image: str | None            # Base64-encoded PNG/JPEG cover image
 
     # ── Control flow ───────────────────────────────────────────────────────
     retry_count: int
     error: str | None
-
-
-class WorkerState(TypedDict):
-    """
-    Per-section state passed to each parallel generate_section worker.
-
-    ``target_words`` is injected by assign_workers from LENGTH_CONFIG so the
-    generator can produce appropriately sized prose for the requested duration.
-    """
-
-    section: StorySection
-    story_id: str
-    tone: str
-    audience: str
-    target_words: int                  # Words to generate for this section
-    sections_done: Annotated[list[dict], operator.add]
 
 
 class ChapterWorkerState(TypedDict):

@@ -9,7 +9,7 @@ import logging
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
-from tenacity import retry, stop_after_attempt, wait_exponential
+from langgraph.config import get_stream_writer
 
 from config import settings
 from state.schema import (
@@ -24,37 +24,46 @@ from state.schema import (
 
 logger = logging.getLogger(__name__)
 
-# Higher token ceiling because long outlines contain 48 section briefs.
-_llm = ChatGoogleGenerativeAI(
-    model=settings.gemini_model,
-    google_api_key=settings.gemini_api_key,
-    temperature=0.7,
-    max_output_tokens=4096,
-)
-
-# Bind to PlannerOutput — not StoryOutline — so the LLM sees a clean schema
-# without runtime fields (indices, target_words, flat sections list, etc.).
-_structured_llm = _llm.with_structured_output(PlannerOutput)
+_structured_llm = None
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    reraise=True
-)
-def _invoke_planner(messages):
-    """Internal helper to invoke LLM with retries."""
-    return _structured_llm.invoke(messages)
+def _get_structured_llm():
+    """Lazily build the planner LLM so import-time env issues do not crash startup."""
+    global _structured_llm
+    if _structured_llm is None:
+        llm_kwargs: dict = {
+            "model": settings.gemini_model,
+            "temperature": 0.7,
+            "max_output_tokens": 4096,
+        }
+
+        if settings.using_vertex_ai:
+            if not settings.vertex_project_id.strip():
+                raise ValueError(
+                    "VERTEX_PROJECT_ID is required when USE_VERTEX_AI=true."
+                )
+            llm_kwargs.update(
+                {
+                    "vertexai": True,
+                    "project": settings.vertex_project_id,
+                    "location": settings.vertex_location,
+                }
+            )
+        else:
+            llm_kwargs["google_api_key"] = settings.gemini_api_key
+
+        llm = ChatGoogleGenerativeAI(**llm_kwargs)
+        # Bind to PlannerOutput — not StoryOutline — so the LLM sees a clean schema
+        # without runtime fields (indices, target_words, flat sections list, etc.).
+        _structured_llm = llm.with_structured_output(PlannerOutput)
+    return _structured_llm
 
 
-def plan_story(state: StoryState) -> dict:
+async def plan_story(state: StoryState) -> dict:
     """
     Orchestrates the story structure: flattening the LLM's chapter-tree 
     into a globally-indexed section list for parallel generation.
     """
-    if state.get("outline"):
-        logger.info("planner.skip story_id=%s outline already exists", state["story_id"])
-        return {}
     cfg             = LENGTH_CONFIG[state["length"]]
     n_chapters      = cfg["chapters"]
     sections_per    = cfg["sections_per"]
@@ -69,6 +78,9 @@ def plan_story(state: StoryState) -> dict:
         state["story_id"], state["topic"], state["length"],
         n_chapters, total_sections, target_words, target_minutes,
     )
+
+    writer = get_stream_writer()
+    writer({"node": "plan_story", "status": "planning", "message": "Generating story outline…"})
 
     system_prompt = f"""You are a master storyteller and content strategist.
 Your task: produce a detailed story outline for a spoken-word narration of approximately {target_minutes} minutes.
@@ -94,7 +106,7 @@ Write descriptions for the ear, not the eye. Think in narrative arcs, tension, a
 
     human_prompt = f"Create the full story outline for: {state['topic']}"
 
-    raw: PlannerOutput = _invoke_planner([
+    raw: PlannerOutput = await _get_structured_llm().ainvoke([
         SystemMessage(content=system_prompt),
         HumanMessage(content=human_prompt),
     ])

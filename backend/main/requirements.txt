@@ -2,6 +2,9 @@ fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 python-multipart>=0.0.9
 langgraph>=0.3.0
+# langgraph-checkpoint-postgres — uncomment for production persistence:
+# pip install langgraph-checkpoint-postgres
+# Then swap InMemorySaver in graph/pipeline.py for AsyncPostgresSaver.
 langchain-core>=0.3.0
 langchain-google-genai>=2.0.0
 google-genai>=1.0.0

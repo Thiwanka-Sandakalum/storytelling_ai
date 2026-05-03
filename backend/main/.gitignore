@@ -32,3 +32,8 @@ htmlcov/
 
 # ── Docker ───────────────────────────────────────────────────
 *.dockerignore
+
+# ── LangGraph local artifacts ────────────────────────────────
+.langgraph_api/
+.langgraph-checkpoints.sqlite
+.langgraph-cache.sqlite

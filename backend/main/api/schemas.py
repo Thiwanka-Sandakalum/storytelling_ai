@@ -5,7 +5,7 @@ api/schemas.py — Pydantic models for the REST API.
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 
@@ -33,6 +33,10 @@ class StoryRequest(BaseModel):
         default="medium",
         description="Approximate story length: short (~3 sections), medium (~4), long (~5).",
     )
+    require_approval: bool = Field(
+        default=False,
+        description="If True, pipeline pauses after planning for human outline review before generating.",
+    )
     user_prefs: dict = Field(
         default_factory=dict,
         description="Optional free-form style preferences passed through to agents.",
@@ -57,16 +61,35 @@ class StorySectionOut(BaseModel):
 
     title: str
     description: str
+    index: int | None = None
+    chapter_index: int | None = None
+    chapter_title: str | None = None
     content: str | None = None
+
+
+class StoryChapterOut(BaseModel):
+    """A chapter containing multiple section briefs."""
+
+    title: str
+    description: str
+    chapter_index: int | None = None
+    sections: list[StorySectionOut]
 
 
 class StoryOutlineOut(BaseModel):
     """Serialisable form of the story outline."""
 
+    # extra='ignore': DB rows may carry fields added in future migrations;
+    # silently dropping them is safer than crashing the response serializer.
+    model_config = ConfigDict(extra="ignore")
+
     hook: str
+    chapters: list[StoryChapterOut]
     sections: list[StorySectionOut]
     climax: str
     closing: str
+    target_words: int
+    target_minutes: int
 
 
 class StoryStatusResponse(BaseModel):
@@ -82,6 +105,7 @@ class StoryStatusResponse(BaseModel):
     )
     outline: StoryOutlineOut | None = None
     draft_script: str | None = None
+    cover_image: str | None = None
     error: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -113,4 +137,15 @@ class HealthResponse(BaseModel):
     """Response for GET /health."""
 
     status: str = "ok"
-    environment: str
+    environment: str = "development"
+
+
+class CoverExistsResponse(BaseModel):
+    """Response for GET /stories/{id}/cover/exists."""
+
+    story_id: str
+    has_cover: bool = Field(description="True if a cover image has been generated for this story.")
+    cover_url: str | None = Field(
+        default=None,
+        description="Relative URL to fetch the binary PNG. None when has_cover is False.",
+    )

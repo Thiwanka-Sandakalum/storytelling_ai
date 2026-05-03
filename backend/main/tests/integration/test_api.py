@@ -7,7 +7,9 @@ and their interaction with Pydantic schemas.
 
 import pytest
 from unittest.mock import AsyncMock
+import base64
 from storage.db import Story
+
 
 @pytest.mark.asyncio
 async def test_generate_story_endpoint(client, mock_service):
@@ -47,13 +49,28 @@ async def test_get_story_endpoint_success(client, mock_service):
         audience="all",
         length="short",
         status="completed",
-        outline_json={"hook": "test", "sections": [], "climax": "test", "closing": "test"},
+        cover_image=base64.b64encode(b"cover-bytes").decode("utf-8"),
+        outline_json={
+            "hook": "test",
+            "chapters": [
+                {
+                    "title": "Chapter 1",
+                    "description": "desc",
+                    "chapter_index": 0,
+                    "sections": [],
+                }
+            ],
+            "sections": [],
+            "climax": "test",
+            "closing": "test",
+            "target_words": 1400,
+            "target_minutes": 10,
+        },
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )
     mock_service.get_story_status = AsyncMock(return_value={
         "story": mock_story,
-        "script_url": "http://signed-url"
     })
     
     response = await client.get("/stories/test-id")
@@ -61,8 +78,55 @@ async def test_get_story_endpoint_success(client, mock_service):
     assert response.status_code == 200
     data = response.json()
     assert data["story_id"] == "test-id"
-    assert data["script_url"] == "http://signed-url"
     assert data["outline"]["hook"] == "test"
+    assert data["cover_image"] is not None
+
+
+@pytest.mark.asyncio
+async def test_get_story_cover_endpoint_success(client, mock_service):
+    from datetime import datetime
+
+    raw = b"png-bytes"
+    mock_story = Story(
+        id="test-id",
+        topic="Test Topic",
+        tone="dark",
+        audience="all",
+        length="short",
+        status="completed",
+        cover_image=base64.b64encode(raw).decode("utf-8"),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    mock_service.get_story_status = AsyncMock(return_value={"story": mock_story})
+
+    response = await client.get("/stories/test-id/cover")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/png")
+    assert response.content == raw
+
+
+@pytest.mark.asyncio
+async def test_get_story_cover_endpoint_404_when_missing(client, mock_service):
+    from datetime import datetime
+
+    mock_story = Story(
+        id="test-id",
+        topic="Test Topic",
+        tone="dark",
+        audience="all",
+        length="short",
+        status="completed",
+        cover_image=None,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    mock_service.get_story_status = AsyncMock(return_value={"story": mock_story})
+
+    response = await client.get("/stories/test-id/cover")
+
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -77,3 +141,30 @@ async def test_get_story_not_found(client, mock_service):
     response = await client.get("/stories/unknown")
     assert response.status_code == 404
     assert "Not found" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_story_events_closes_on_awaiting_approval(client, mock_service):
+    """Verify SSE closes once story reaches awaiting_approval state."""
+    from datetime import datetime
+
+    mock_story = Story(
+        id="test-id",
+        topic="Test Topic",
+        tone="dark",
+        audience="all",
+        length="short",
+        status="awaiting_approval",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    mock_service.get_story_status = AsyncMock(return_value={"story": mock_story})
+
+    response = await client.get("/stories/test-id/events")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+
+    body = response.text
+    assert '"story_id": "test-id"' in body
+    assert '"status": "awaiting_approval"' in body

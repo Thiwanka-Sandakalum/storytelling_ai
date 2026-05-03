@@ -32,11 +32,17 @@ def build_engine():
         settings.database_url,
         echo=settings.app_env == "development",
         pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_timeout=settings.db_pool_timeout_seconds,
+        pool_recycle=settings.db_pool_recycle_seconds,
         # Neon uses PgBouncer in transaction mode — prepared statements
         # are not supported across pooled connections, so we disable the cache.
-        connect_args={"prepared_statement_cache_size": 0},
+        connect_args={
+            "prepared_statement_cache_size": 0,
+            "timeout": settings.db_connect_timeout_seconds,
+            "command_timeout": settings.db_command_timeout_seconds,
+        },
     )
 
 
@@ -76,6 +82,7 @@ class Story(Base):
     outline_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     draft_script: Mapped[str | None] = mapped_column(Text, nullable=True)
     script_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cover_image: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Job control
     status: Mapped[str] = mapped_column(
