@@ -1,9 +1,12 @@
 export type StoryStatus =
     | 'idle'
     | 'queued'
+    | 'processing'
     | 'planning'
-    | 'pending_approval'
-    | 'writing'
+    | 'generating'
+    | 'assembling'
+    | 'cover_generating'
+    | 'awaiting_approval'
     | 'completed'
     | 'failed'
     | string;
@@ -28,20 +31,38 @@ export const STORY_STATUS_META: Record<string, StoryStatusMeta> = {
         dotClass: 'bg-outline-variant animate-pulse',
         emphasisClass: 'text-on-surface-variant',
     },
+    processing: {
+        label: 'Processing',
+        badgeClass: 'text-tertiary border-tertiary/30 bg-tertiary/10',
+        dotClass: 'bg-tertiary animate-pulse',
+        emphasisClass: 'text-tertiary',
+    },
     planning: {
         label: 'Planning',
         badgeClass: 'text-tertiary border-tertiary/30 bg-tertiary/10',
         dotClass: 'bg-tertiary animate-pulse',
         emphasisClass: 'text-tertiary',
     },
-    pending_approval: {
-        label: 'Pending Approval',
+    generating: {
+        label: 'Writing',
         badgeClass: 'text-primary border-primary/30 bg-primary/10',
         dotClass: 'bg-primary animate-pulse',
         emphasisClass: 'text-primary',
     },
-    writing: {
-        label: 'Writing',
+    assembling: {
+        label: 'Assembling',
+        badgeClass: 'text-primary border-primary/30 bg-primary/10',
+        dotClass: 'bg-primary animate-pulse',
+        emphasisClass: 'text-primary',
+    },
+    cover_generating: {
+        label: 'Creating Cover',
+        badgeClass: 'text-secondary border-secondary/30 bg-secondary/10',
+        dotClass: 'bg-secondary animate-pulse',
+        emphasisClass: 'text-secondary',
+    },
+    awaiting_approval: {
+        label: 'Awaiting Approval',
         badgeClass: 'text-primary border-primary/30 bg-primary/10',
         dotClass: 'bg-primary animate-pulse',
         emphasisClass: 'text-primary',

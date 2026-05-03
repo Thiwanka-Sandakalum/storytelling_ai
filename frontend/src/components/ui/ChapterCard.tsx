@@ -7,7 +7,7 @@ interface ChapterCardProps {
      content: string;
      tags?: string[];
      generating?: boolean;
-     onEdit?: (field: 'title' | 'summary', value: string) => void;
+     onEdit?: (field: 'title' | 'description', value: string) => void;
 }
 
 export const ChapterCard = ({ number, title, content, tags, generating, onEdit }: ChapterCardProps) => {
@@ -43,18 +43,13 @@ export const ChapterCard = ({ number, title, content, tags, generating, onEdit }
                               <h3 className="font-headline text-3xl italic text-on-background group-hover:text-primary transition-colors">{title}</h3>
                          )}
                     </div>
-                    {!onEdit && (
-                         <button className="text-on-surface-variant hover:text-primary transition-colors">
-                              <span className="material-symbols-outlined">edit</span>
-                         </button>
-                    )}
                </div>
                {onEdit ? (
                     <textarea
                          className="font-body text-on-surface-variant leading-relaxed w-full bg-transparent border-none focus:ring-1 focus:ring-primary/30 rounded resize-none"
                          rows={3}
                          value={content}
-                         onChange={(e) => onEdit('summary', e.target.value)}
+                         onChange={(e) => onEdit('description', e.target.value)}
                     />
                ) : (
                     <p className="font-body text-on-surface-variant leading-relaxed">

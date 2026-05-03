@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 const navItems = [
      { to: '/', icon: 'auto_fix_high', label: 'Forge' },
@@ -6,6 +6,9 @@ const navItems = [
 ];
 
 const Sidebar = () => {
+     const { pathname } = useLocation();
+     const isForgeActive = pathname === '/' || pathname.startsWith('/story/') || pathname.startsWith('/studio/');
+
      return (
           <aside className="hidden md:flex flex-col h-[calc(100vh-5rem)] w-64 bg-[#0e0c20]/80 backdrop-blur-2xl border-r border-[#48455c]/15 py-6 fixed left-0">
                <nav className="flex-1 space-y-1">
@@ -14,12 +17,13 @@ const Sidebar = () => {
                               key={to}
                               to={to}
                               end
-                              className={({ isActive }) =>
-                                   `flex items-center gap-4 px-6 py-3 transition-all duration-300 ${isActive
+                              className={({ isActive }) => {
+                                   const active = isActive || (to === '/' && isForgeActive);
+                                   return `flex items-center gap-4 px-6 py-3 transition-all duration-300 ${active
                                         ? 'bg-primary/10 text-primary border-r-4 border-primary'
                                         : 'text-on-surface/40 hover:text-on-surface/80 hover:bg-[#1f1c37] border-r-4 border-transparent'
-                                   }`
-                              }
+                                        }`;
+                              }}
                          >
                               <span className="material-symbols-outlined text-[20px]">{icon}</span>
                               <span className="font-label text-xs font-semibold tracking-wider uppercase">{label}</span>

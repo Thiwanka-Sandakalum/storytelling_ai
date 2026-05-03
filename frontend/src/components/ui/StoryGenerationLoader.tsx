@@ -11,7 +11,11 @@ export const StoryGenerationLoader = ({ status, topic }: StoryGenerationLoaderPr
     const statusMessages: Record<string, string> = {
         queued: 'Activating Neural Engine...',
         planning: 'Crafting narrative blueprint...',
-        writing: 'Weaving your tale into existence...',
+        processing: 'Initializing story pipeline...',
+        generating: 'Weaving your tale into existence...',
+        assembling: 'Assembling the final manuscript...',
+        cover_generating: 'Painting the cover art...',
+        awaiting_approval: 'Waiting for your approval...',
         completed: 'Story ignited successfully!',
     };
 

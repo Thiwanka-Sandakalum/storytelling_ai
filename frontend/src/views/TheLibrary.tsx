@@ -4,13 +4,7 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { AsyncStatePanel } from '../components/ui/AsyncStatePanel';
 import { StoryStatusBadge } from '../components/ui/StoryStatusBadge';
 import { api } from '../services/api';
-
-interface StorySummary {
-    story_id: string;
-    topic: string;
-    status: string;
-    created_at: string;
-}
+import type { StorySummary } from '../services/api';
 
 const TheLibrary = () => {
     const navigate = useNavigate();
@@ -126,21 +120,44 @@ const TheLibrary = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-6">
                         {stories.map((story) => {
                             const isReady = story.status === 'completed';
+                            const isReviewable = story.status === 'awaiting_approval';
+                            const isClickable = isReady || isReviewable;
                             const isDeleting = deletingId === story.story_id;
+
+                            const handleClick = () => {
+                                if (isReady) navigate(`/studio/${story.story_id}`);
+                                else if (isReviewable) navigate(`/story/${story.story_id}`);
+                            };
 
                             return (
                                 <div
                                     key={story.story_id}
-                                    className={`group transition-all duration-300 rounded-3xl ${isReady ? 'cursor-pointer' : ''}
+                                    className={`group transition-all duration-300 rounded-3xl ${isClickable ? 'cursor-pointer' : ''}
                                         } ${isDeleting ? 'opacity-40 pointer-events-none' : ''}`}
-                                    onClick={isReady ? () => navigate(`/studio/${story.story_id}`) : undefined}
+                                    onClick={isClickable ? handleClick : undefined}
                                 >
                                     <GlassPanel
-                                        className={`p-5 flex flex-col gap-4 border border-outline-variant/10 ${isReady
+                                        className={`p-4 flex flex-col gap-4 border border-outline-variant/10 ${isClickable
                                             ? 'group-hover:border-primary/30 group-hover:shadow-[0_0_30px_rgba(199,153,255,0.1)]'
                                             : 'opacity-80'
                                             }`}
                                     >
+                                        {/* Cover thumbnail */}
+                                        <div className="relative aspect-[3/2] rounded-2xl overflow-hidden border border-outline-variant/10">
+                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_rgba(199,153,255,0.35)_0%,_transparent_55%),radial-gradient(circle_at_75%_75%,_rgba(74,248,227,0.2)_0%,_transparent_50%),linear-gradient(160deg,#161132_0%,#0e0b24_100%)]" />
+                                            {isReady ? (
+                                                <img
+                                                    src={api.getCoverUrl(story.story_id)}
+                                                    alt={`Cover for ${story.topic}`}
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                                    }}
+                                                />
+                                            ) : null}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0818]/45 via-transparent to-transparent" />
+                                        </div>
+
                                         {/* Top row */}
                                         <div className="flex items-start justify-between gap-3">
                                             <StoryStatusBadge status={story.status} />
@@ -157,7 +174,7 @@ const TheLibrary = () => {
                                         </div>
 
                                         {/* Topic */}
-                                        <p className="font-headline italic text-on-background text-base leading-snug line-clamp-3 flex-1">
+                                        <p className="font-headline italic text-on-background text-base leading-snug line-clamp-3 min-h-[4.5rem]">
                                             "{story.topic}"
                                         </p>
 
@@ -172,6 +189,14 @@ const TheLibrary = () => {
                                                         play_circle
                                                     </span>
                                                     Listen
+                                                </span>
+                                            )}
+                                            {isReviewable && (
+                                                <span className="flex items-center gap-1 font-label text-[10px] uppercase tracking-widest text-primary group-hover:gap-2 transition-all">
+                                                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                                        rate_review
+                                                    </span>
+                                                    Review
                                                 </span>
                                             )}
                                         </div>

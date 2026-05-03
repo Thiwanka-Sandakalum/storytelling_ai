@@ -5,10 +5,18 @@ import { GlassPanel } from '../components/ui/GlassPanel';
 import { LuminousButton } from '../components/ui/LuminousButton';
 import { StoryGenerationLoader } from '../components/ui/StoryGenerationLoader';
 import { api } from '../services/api';
-import { addNotification, setStatus } from '../store/slices/storySlice';
+import { addNotification, setStatus, setStoryId } from '../store/slices/storySlice';
 
-const tones = ['Inspirational', 'Educational', 'Gothic', 'Whimsical'];
+const tones = ['Inspirational', 'Educational', 'Dark', 'Funny'];
 const lengths = ['short', 'medium', 'long'];
+
+/** Maps display label to the backend enum value accepted by the API. */
+const TONE_MAP: Record<string, string> = {
+     Inspirational: 'inspirational',
+     Educational: 'educational',
+     Dark: 'dark',
+     Funny: 'funny',
+};
 
 const TheForge = () => {
      const [topic, setTopic] = useState('');
@@ -18,6 +26,7 @@ const TheForge = () => {
      const [selectedVoice, setSelectedVoice] = useState('Puck');
      const [isIgniting, setIsIgniting] = useState(false);
      const [generatingStatus, setGeneratingStatus] = useState<string | null>(null);
+     const [requireApproval, setRequireApproval] = useState(false);
      const dispatch = useDispatch();
      const navigate = useNavigate();
 
@@ -26,69 +35,25 @@ const TheForge = () => {
           setIsIgniting(true);
           setGeneratingStatus('queued');
           try {
-               const toneMap: Record<string, string> = {
-                    Inspirational: 'inspirational',
-                    Educational: 'educational',
-                    Gothic: 'dark',
-                    Whimsical: 'funny',
-               };
                const result = await api.generateStory(
                     topic,
-                    toneMap[selectedTone] || 'inspirational',
+                    TONE_MAP[selectedTone] || 'inspirational',
                     audience || 'general audience',
-                    selectedVoice,
-                    selectedLength,
+                    selectedVoice as any,
+                    selectedLength as any,
+                    requireApproval,
                );
 
-               // Poll until story is ready
-               let isComplete = false;
-               let checkCount = 0;
-               const maxChecks = 180; // 3 minutes with 1s interval
-
-               while (!isComplete && checkCount < maxChecks) {
-                    await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5s before polling
-
-                    try {
-                         const statusData = await api.getStoryStatus(result.story_id);
-                         setGeneratingStatus(statusData.status);
-
-                         // When story reaches 'writing' or 'completed', navigate to studio
-                         if (statusData.status === 'writing' || statusData.status === 'completed') {
-                              dispatch(setStatus(statusData.status));
-                              isComplete = true;
-                              navigate(`/studio/${result.story_id}`);
-                         } else if (statusData.status === 'failed') {
-                              dispatch(setStatus('failed'));
-                              dispatch(addNotification({
-                                   type: 'error',
-                                   message: 'Story generation failed. Please refine your seed and try again.',
-                              }));
-                              isComplete = true;
-                              setGeneratingStatus(null);
-                              setIsIgniting(false);
-                         }
-
-                         checkCount++;
-                    } catch (err) {
-                         console.error('Status check failed:', err);
-                         checkCount++;
-                    }
-               }
-
-               if (!isComplete) {
-                    console.error('Story generation timeout after 3 minutes');
-                    dispatch(addNotification({
-                         type: 'error',
-                         message: 'Generation timed out. Please try again with a shorter or clearer seed.',
-                    }));
-                    setGeneratingStatus(null);
-                    setIsIgniting(false);
-               }
+               // Sync story ID into Redux and navigate immediately.
+               // SSE (via useSSE in TheBlueprint / StoryProgress) will drive all further status updates.
+               dispatch(setStoryId(result.story_id));
+               dispatch(setStatus('queued'));
+               navigate(`/story/${result.story_id}`);
           } catch (err) {
                console.error('Ignite failed:', err);
                dispatch(addNotification({
                     type: 'error',
-                    message: 'Unable to ignite your story right now. Please try again.',
+                    message: err instanceof Error ? err.message : 'Unable to ignite your story right now. Please try again.',
                }));
                setGeneratingStatus(null);
                setIsIgniting(false);
@@ -145,6 +110,29 @@ const TheForge = () => {
                          </div>
 
                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {/* Review outline toggle */}
+                              <div className="col-span-full flex items-center gap-3 px-1">
+                                   <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={requireApproval}
+                                        onClick={() => setRequireApproval((v) => !v)}
+                                        className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${requireApproval ? 'bg-primary' : 'bg-surface-container-high border border-outline-variant/30'}`}
+                                   >
+                                        <span
+                                             className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${requireApproval ? 'translate-x-5' : 'translate-x-0'}`}
+                                        />
+                                   </button>
+                                   <div>
+                                        <p className="font-label text-xs font-semibold text-on-surface uppercase tracking-widest">
+                                             Review outline before writing
+                                        </p>
+                                        <p className="font-body text-[11px] text-on-surface-variant/60 mt-0.5">
+                                             Pause after planning so you can edit and approve the chapter structure.
+                                        </p>
+                                   </div>
+                              </div>
+
                               <GlassPanel className="p-4">
                                    <h4 className="font-label text-[10px] uppercase tracking-widest text-secondary mb-4 flex items-center gap-2">
                                         <span className="material-symbols-outlined text-sm">palette</span>

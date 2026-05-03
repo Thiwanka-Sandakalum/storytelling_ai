@@ -3,12 +3,42 @@ import { useDispatch } from 'react-redux';
 import { setSession, addNotification } from '../store/slices/storySlice';
 import { api } from '../services/api';
 
-const TTS_WS_URL = import.meta.env.VITE_TTS_WS_URL || 'ws://localhost:8001';
+const TTS_WS_URL = import.meta.env.VITE_TTS_WS_URL;
+const TTS_SERVICE_URL = import.meta.env.VITE_TTS_SERVICE_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 const SAMPLE_RATE = 24000;
 const MIC_SAMPLE_RATE = 16000;
 const INITIAL_BUFFER_DELAY = 0.6; // 600ms look-ahead — LLM audio streams have high jitter
 const PCM_FLUSH_MS = 25;
 const PCM_TARGET_BATCH_BYTES = 9600; // ~100 ms @ 24kHz, PCM16 mono
+const WS_CONNECT_TIMEOUT_MS = 8000;
+
+const toWsBaseUrl = (rawUrl: string): string => {
+     const parsed = new URL(rawUrl);
+     if (parsed.protocol === 'http:') parsed.protocol = 'ws:';
+     if (parsed.protocol === 'https:') parsed.protocol = 'wss:';
+     return parsed.origin;
+};
+
+const resolveTtsWsBase = (): string => {
+     if (TTS_WS_URL) {
+          return toWsBaseUrl(TTS_WS_URL);
+     }
+
+     if (TTS_SERVICE_URL) {
+          return toWsBaseUrl(TTS_SERVICE_URL);
+     }
+
+     if (API_URL) {
+          const parsed = new URL(API_URL);
+          const wsProtocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+          const hostname = parsed.hostname;
+          return `${wsProtocol}//${hostname}:8001`;
+     }
+
+     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+     return `${wsProtocol}//localhost:8001`;
+};
 
 const downsampleBuffer = (buffer: Float32Array, inputRate: number, outputRate: number): Float32Array => {
      if (outputRate >= inputRate) return buffer;
@@ -73,6 +103,7 @@ export const useTTS = (storyId: string | null) => {
      const micContextRef = useRef<AudioContext | null>(null);
      const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
      const micProcessorRef = useRef<ScriptProcessorNode | null>(null);
+     const wsConnectTimerRef = useRef<number | null>(null);
 
      useEffect(() => {
           if (!storyId) return;
@@ -84,7 +115,9 @@ export const useTTS = (storyId: string | null) => {
                     const session = {
                          sessionId: data.session_id,
                          userId: data.user_id,
-                         segmentData: data.segment_data || [],
+                         // segment_count tells us how many audio segments to expect;
+                         // prose text comes from draft_script in StoryStatusResponse, not here.
+                         segmentCount: data.segment_count,
                     };
                     dispatch(setSession(session));
 
@@ -97,12 +130,42 @@ export const useTTS = (storyId: string | null) => {
                     gainNodeRef.current.connect(audioContextRef.current.destination);
 
                     // 3. Narrative Stream
-                    const ws = new WebSocket(`${TTS_WS_URL}/ws/${session.userId}/${session.sessionId}`);
+                    const wsBase = resolveTtsWsBase();
+                    const ws = new WebSocket(`${wsBase}/ws/${session.userId}/${session.sessionId}`);
                     wsRef.current = ws;
+
+                    if (wsConnectTimerRef.current !== null) {
+                         window.clearTimeout(wsConnectTimerRef.current);
+                    }
+                    wsConnectTimerRef.current = window.setTimeout(() => {
+                         if (ws.readyState === WebSocket.CONNECTING) {
+                              ws.close();
+                              dispatch(addNotification({
+                                   type: 'error',
+                                   message: 'Narrator connection timed out. Check VITE_TTS_WS_URL or TTS service availability.',
+                              }));
+                         }
+                    }, WS_CONNECT_TIMEOUT_MS);
 
                     ws.onopen = () => {
                          console.log('TTS WebSocket Connected');
+                         if (wsConnectTimerRef.current !== null) {
+                              window.clearTimeout(wsConnectTimerRef.current);
+                              wsConnectTimerRef.current = null;
+                         }
                          setIsConnected(true);
+                    };
+
+                    ws.onerror = () => {
+                         if (wsConnectTimerRef.current !== null) {
+                              window.clearTimeout(wsConnectTimerRef.current);
+                              wsConnectTimerRef.current = null;
+                         }
+                         setIsConnected(false);
+                         dispatch(addNotification({
+                              type: 'error',
+                              message: 'Narrator WebSocket failed to connect. Verify TTS URL and service health.',
+                         }));
                     };
 
                     // Audio arrives as raw binary frames — no JSON parsing or
@@ -146,11 +209,16 @@ export const useTTS = (storyId: string | null) => {
 
                     ws.onclose = () => {
                          console.log('TTS WebSocket Closed');
+                         if (wsConnectTimerRef.current !== null) {
+                              window.clearTimeout(wsConnectTimerRef.current);
+                              wsConnectTimerRef.current = null;
+                         }
                          stopMicQuestionInternal();
                          startedRef.current = false;
                          setHasStarted(false);
                          setIsConnected(false);
                          setIsPlaying(false);
+                         setIsBuffering(false);
                     };
                } catch (err) {
                     console.error('Narrator Initialization Error:', err);
@@ -170,6 +238,10 @@ export const useTTS = (storyId: string | null) => {
                if (flushTimerRef.current !== null) {
                     window.clearTimeout(flushTimerRef.current);
                     flushTimerRef.current = null;
+               }
+               if (wsConnectTimerRef.current !== null) {
+                    window.clearTimeout(wsConnectTimerRef.current);
+                    wsConnectTimerRef.current = null;
                }
                if (audioContextRef.current?.state !== 'closed') {
                     audioContextRef.current?.close();

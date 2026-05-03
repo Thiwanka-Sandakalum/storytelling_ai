@@ -3,6 +3,7 @@ import { AuthenticateWithRedirectCallback, useAuth } from '@clerk/react';
 import Layout from './components/Layout';
 import TheForge from './views/TheForge';
 import TheLibrary from './views/TheLibrary';
+import TheBlueprint from './views/TheBlueprint';
 import NarratorStudio from './views/NarratorStudio';
 import NotificationSystem from './components/ui/NotificationSystem';
 import { SignInOrUpFlow } from './components/auth/SignInOrUpFlow';
@@ -31,6 +32,8 @@ function App() {
           <Routes>
             <Route path="/" element={<TheForge />} />
             <Route path="/library" element={<TheLibrary />} />
+            {/* Story progress, outline review, and approval — all served by TheBlueprint */}
+            <Route path="/story/:id" element={<TheBlueprint />} />
             <Route path="/studio/:id" element={<NarratorStudio />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
