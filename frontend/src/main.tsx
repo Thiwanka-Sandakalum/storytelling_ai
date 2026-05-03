@@ -4,7 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { ClerkProvider } from '@clerk/react';
 import { initializeApp } from 'firebase/app';
+<<<<<<< HEAD
 import { getAnalytics, isSupported } from 'firebase/analytics';
+=======
+import { getAnalytics } from 'firebase/analytics';
+>>>>>>> 16fe0545f72b270ddd541449a371634cc1763074
 import { store } from './store';
 import App from './App';
 import { TTSProvider } from './context/TTSContext';
