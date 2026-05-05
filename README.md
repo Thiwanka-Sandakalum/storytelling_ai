@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Storytelling AI — LangGraph Multi-Phase Narrative Pipeline with Gemini Live Narration
 
 > **15-node, 6-phase LangGraph state machine** that converts a one-line topic prompt into a validated long-form story — structured outline planning, multi-stage chapter validation + repair loops, Human-in-the-Loop approval, parallel fan-out generation, coverage gate, LLM quality evaluation, and a separate Google ADK narrator service that streams expressive PCM16 audio via Gemini Multimodal Live.
@@ -498,4 +497,3 @@ Frontend ← Audio + Sync events (highlight UI)
 ---
 **Last Updated**: March 29, 2026  
 **Status**: Active Development 🚀
->>>>>>> 16fe0545f72b270ddd541449a371634cc1763074
