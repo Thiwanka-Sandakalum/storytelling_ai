@@ -190,7 +190,6 @@ doc/              # Architecture docs, ADRs, agent flow diagrams
 
 ---
 
-<<<<<<< HEAD
 ## Status
 
 🟢 **Core pipeline** — complete (plan → validate → HITL → parallel generate+validate+repair → coverage gate → assemble → quality evaluate → cover)  
