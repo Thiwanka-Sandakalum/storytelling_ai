@@ -243,4 +243,3 @@ doc/              # Architecture docs, ADRs, agent flow diagrams
 ---
 **Last Updated**: March 29, 2026  
 **Status**: Active Development 🚀
->>>>>>> 16fe0545f72b270ddd541449a371634cc1763074
