@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1000 560" style="background: #0d1117; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <!-- Glow Effects -->
+    <filter id="glow-teal" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glow-purple" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Gradients -->
+    <linearGradient id="grad-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="grad-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <linearGradient id="grad-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="grad-redis" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#b91c1c" />
+    </linearGradient>
+    <linearGradient id="grad-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Arrow Marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#64748b" />
+    </marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#0ea5e9" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#a855f7" />
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f97316" />
+    </marker>
+  </defs>
+
+  <!-- Title / Legend -->
+  <text x="30" y="40" fill="#f8fafc" font-size="22" font-weight="700" letter-spacing="-0.025em">Magic Tale System Architecture</text>
+  <text x="30" y="62" fill="#64748b" font-size="13">Decoupled story generation (OpenAI) &amp; interactive live narration (Gemini Multimodal Live)</text>
+
+  <!-- GROUP 1: FRONTEND LAYER (React + TypeScript) -->
+  <g transform="translate(30, 90)">
+    <!-- Container Box -->
+    <rect width="210" height="420" rx="12" fill="url(#grad-dark)" stroke="#334155" stroke-width="1.5" />
+    <rect width="210" height="40" rx="12" fill="#1e293b" opacity="0.4" />
+    <text x="15" y="25" fill="#38bdf8" font-size="14" font-weight="600" filter="url(#glow-teal)">FRONTEND (React + TS)</text>
+    
+    <!-- Sub-components -->
+    <!-- Card 1: The Forge -->
+    <g transform="translate(15, 60)">
+      <rect width="180" height="95" rx="8" fill="#151f32" stroke="#0ea5e9" stroke-width="1" />
+      <text x="12" y="24" fill="#f8fafc" font-size="13" font-weight="600">The Forge</text>
+      <text x="12" y="44" fill="#94a3b8" font-size="11">Prompt Submission</text>
+      <text x="12" y="60" fill="#94a3b8" font-size="11">SSE Stream Listener</text>
+      <text x="12" y="76" fill="#94a3b8" font-size="11">Trigger Job Dispatch</text>
+    </g>
+
+    <!-- Card 2: The Blueprint -->
+    <g transform="translate(15, 175)">
+      <rect width="180" height="95" rx="8" fill="#151f32" stroke="#0ea5e9" stroke-width="1" />
+      <text x="12" y="24" fill="#f8fafc" font-size="13" font-weight="600">The Blueprint</text>
+      <text x="12" y="44" fill="#94a3b8" font-size="11">HITL Review Interface</text>
+      <text x="12" y="60" fill="#94a3b8" font-size="11">Interactive Outline Editor</text>
+      <text x="12" y="76" fill="#94a3b8" font-size="11">Send Resume Command</text>
+    </g>
+
+    <!-- Card 3: Narrator Studio -->
+    <g transform="translate(15, 290)">
+      <rect width="180" height="110" rx="8" fill="#151f32" stroke="#0ea5e9" stroke-width="1" />
+      <text x="12" y="24" fill="#f8fafc" font-size="13" font-weight="600">Narrator Studio</text>
+      <text x="12" y="44" fill="#94a3b8" font-size="11">WebSocket Player UI</text>
+      <text x="12" y="60" fill="#94a3b8" font-size="11">PCM16 Audio Decoder</text>
+      <text x="12" y="76" fill="#94a3b8" font-size="11">Microphone input (Q&amp;A)</text>
+      <text x="12" y="92" fill="#94a3b8" font-size="11">Sentence-Highlight Sync</text>
+    </g>
+  </g>
+
+  <!-- GROUP 2: MAIN GATEWAY API (FastAPI) -->
+  <g transform="translate(300, 90)">
+    <rect width="190" height="120" rx="12" fill="url(#grad-dark)" stroke="#334155" stroke-width="1.5" />
+    <rect width="190" height="40" rx="12" fill="#1e293b" opacity="0.4" />
+    <text x="15" y="25" fill="#a855f7" font-size="14" font-weight="600" filter="url(#glow-purple)">MAIN API (FastAPI)</text>
+    <text x="15" y="65" fill="#f8fafc" font-size="12">Job Dispatch Gateway</text>
+    <text x="15" y="85" fill="#94a3b8" font-size="11">SSE Event Publisher</text>
+    <text x="15" y="102" fill="#94a3b8" font-size="11">HITL Resume Gateway</text>
+  </g>
+
+  <!-- GROUP 3: ASYNC TASK BROKER (Upstash Redis) -->
+  <g transform="translate(300, 240)">
+    <rect width="190" height="90" rx="12" fill="url(#grad-dark)" stroke="#ef4444" stroke-width="1" />
+    <rect width="190" height="35" rx="12" fill="#1e293b" opacity="0.4" />
+    <text x="15" y="22" fill="#ef4444" font-size="13" font-weight="600">TASK BROKER (Redis)</text>
+    <text x="15" y="55" fill="#f8fafc" font-size="12">Celery Queue Broker</text>
+    <text x="15" y="73" fill="#94a3b8" font-size="11">SSE Pub/Sub Channel</text>
+  </g>
+
+  <!-- GROUP 4: GENERATION WORKER (Celery & LangGraph) -->
+  <g transform="translate(540, 90)">
+    <rect width="210" height="240" rx="12" fill="url(#grad-dark)" stroke="#334155" stroke-width="1.5" />
+    <rect width="210" height="40" rx="12" fill="#1e293b" opacity="0.4" />
+    <text x="15" y="25" fill="#a855f7" font-size="14" font-weight="600" filter="url(#glow-purple)">CELERY WORKER</text>
+    
+    <!-- LangGraph Box -->
+    <g transform="translate(15, 55)">
+      <rect width="180" height="170" rx="8" fill="#151f32" stroke="#a855f7" stroke-width="1.5" />
+      <text x="12" y="24" fill="#f8fafc" font-size="13" font-weight="600">LangGraph Pipeline</text>
+      <text x="12" y="44" fill="#c084fc" font-size="11" font-weight="500">15 Nodes / 6 Phases</text>
+      
+      <!-- List of nodes highlights -->
+      <text x="12" y="72" fill="#94a3b8" font-size="10">• plan_story (OpenAI)</text>
+      <text x="12" y="88" fill="#94a3b8" font-size="10">• validate &amp; repair loops</text>
+      <text x="12" y="104" fill="#94a3b8" font-size="10">• await_approval (Pause)</text>
+      <text x="12" y="120" fill="#94a3b8" font-size="10">• generate_chapter (OpenAI)</text>
+      <text x="12" y="136" fill="#94a3b8" font-size="10">• coverage &amp; quality check</text>
+      <text x="12" y="152" fill="#94a3b8" font-size="10">• assemble_story</text>
+    </g>
+  </g>
+
+  <!-- GROUP 5: NARRATOR MICROSERVICE (Google ADK) -->
+  <g transform="translate(800, 90)">
+    <rect width="170" height="150" rx="12" fill="url(#grad-dark)" stroke="#f97316" stroke-width="1.5" />
+    <rect width="170" height="40" rx="12" fill="#1e293b" opacity="0.4" />
+    <text x="12" y="25" fill="#f97316" font-size="13" font-weight="600" filter="url(#glow-orange)">NARRATOR SERVICE</text>
+    <text x="12" y="60" fill="#f8fafc" font-size="12">Google ADK Client</text>
+    <text x="12" y="80" fill="#94a3b8" font-size="11">Gemini Live WS Server</text>
+    <text x="12" y="98" fill="#94a3b8" font-size="11">PCM16 Streaming</text>
+    <text x="12" y="116" fill="#94a3b8" font-size="11">Voice Q&amp;A Capture</text>
+    <text x="12" y="134" fill="#94a3b8" font-size="11">Retry Policies</text>
+  </g>
+
+  <!-- GROUP 6: STATE DATABASE (Cloud SQL PostgreSQL) -->
+  <g transform="translate(420, 420)">
+    <rect width="210" height="90" rx="12" fill="url(#grad-dark)" stroke="#3b82f6" stroke-width="1.5" />
+    <rect width="210" height="35" rx="12" fill="#1e293b" opacity="0.4" />
+    <text x="15" y="22" fill="#3b82f6" font-size="13" font-weight="600">STATE DATABASE (Postgres)</text>
+    <text x="15" y="55" fill="#f8fafc" font-size="12">Story Metadata &amp; Script Storage</text>
+    <text x="15" y="73" fill="#94a3b8" font-size="11">LangGraph Checkpoint Store (Durable)</text>
+  </g>
+
+  <!-- EXTERNAL LLM SERVICES -->
+  <!-- OpenAI -->
+  <g transform="translate(800, 275)">
+    <rect width="170" height="75" rx="8" fill="#1c2524" stroke="#10b981" stroke-width="1" />
+    <text x="12" y="25" fill="#10b981" font-size="13" font-weight="600">OpenAI API</text>
+    <text x="12" y="45" fill="#94a3b8" font-size="11">GPT-4o Model</text>
+    <text x="12" y="61" fill="#94a3b8" font-size="11">Planning &amp; Chapter Gen</text>
+  </g>
+
+  <!-- Gemini Multimodal Live -->
+  <g transform="translate(800, 365)">
+    <rect width="170" height="85" rx="8" fill="#1b1c30" stroke="#4f46e5" stroke-width="1" />
+    <text x="12" y="25" fill="#818cf8" font-size="13" font-weight="600">Gemini Live API</text>
+    <text x="12" y="45" fill="#94a3b8" font-size="11">Bidirectional Audio</text>
+    <text x="12" y="61" fill="#94a3b8" font-size="11">WebSocket Stream</text>
+    <text x="12" y="77" fill="#94a3b8" font-size="11">Real-time interruption</text>
+  </g>
+
+  <!-- CONNECTIONS / FLOW ARROWS -->
+  <!-- Frontend to FastAPI (HTTP/SSE) -->
+  <path d="M 240 120 L 292 120" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrow-teal)" />
+  <text x="248" y="112" fill="#94a3b8" font-size="9" font-weight="600">HTTP/SSE</text>
+
+  <!-- Frontend to FastAPI (HITL Resume Command) -->
+  <path d="M 240 210 L 260 210 L 260 170 L 292 170" fill="none" stroke="#0ea5e9" stroke-width="1.5" marker-end="url(#arrow-teal)" />
+  <text x="242" y="200" fill="#94a3b8" font-size="9">Resume</text>
+
+  <!-- Frontend to Narrator Service (WebSocket Player) -->
+  <path d="M 240 380 L 780 380 L 780 160 L 792 160" fill="none" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrow-teal)" />
+  <text x="350" y="372" fill="#0ea5e9" font-size="10" font-weight="600">WebSockets (PCM16 Audio &amp; Voice Interruption)</text>
+
+  <!-- FastAPI to Redis (Dispatch task) -->
+  <path d="M 395 210 L 395 232" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="402" y="226" fill="#94a3b8" font-size="9">Enqueue</text>
+
+  <!-- Redis to Celery Worker (Pick up task) -->
+  <path d="M 490 285 L 532 285" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="495" y="278" fill="#94a3b8" font-size="9">Consume</text>
+
+  <!-- Celery LangGraph to OpenAI API -->
+  <path d="M 720 220 L 770 220 L 770 310 L 792 310" fill="none" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arrow-purple)" />
+  <text x="732" y="240" fill="#a855f7" font-size="9">Text Generation</text>
+
+  <!-- Narrator Service to Gemini Live API -->
+  <path d="M 970 165 L 985 165 L 985 410 L 978 410" fill="none" stroke="#f97316" stroke-width="2" marker-end="url(#arrow-orange)" />
+  <path d="M 970 410 L 985 410 L 985 165 L 970 165" fill="none" stroke="#f97316" stroke-width="2" />
+  <text x="924" y="358" fill="#f97316" font-size="9" font-weight="600" transform="rotate(90, 924, 358)">BiDi WebSocket</text>
+
+  <!-- LangGraph to PostgreSQL (Checkpoints) -->
+  <path d="M 645 330 L 645 370 L 590 370 L 590 412" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+  <text x="605" y="360" fill="#3b82f6" font-size="10" font-weight="600">Checkpoint State</text>
+
+  <!-- FastAPI to PostgreSQL (Metadata) -->
+  <path d="M 350 210 L 350 450 L 412 450" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)" />
+  <text x="312" y="442" fill="#94a3b8" font-size="9">Read/Write</text>
+</svg>
